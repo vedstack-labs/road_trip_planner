@@ -34,7 +34,6 @@ include = ["app*"]
 
 [tool.setuptools.package-data]
 "app.data" = ["*.json"]
-"app.web" = ["*.html"]
 
 [build-system]
 requires = ["setuptools>=68"]
