@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: helpsonroad
+      POSTGRES_PASSWORD: helpsonroad
+      POSTGRES_DB: helpsonroad
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U helpsonroad"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://helpsonroad:helpsonroad@db:5432/helpsonroad
+      JWT_SECRET: change-me-in-production
+      ENVIRONMENT: development
+      # Set these to enable real LLM generation instead of the deterministic TestModel:
+      # ANTHROPIC_API_KEY: sk-ant-...
+      # AGENT_MODEL: anthropic:claude-sonnet-4-6
+      AGENT_USE_TEST_MODEL: "true"
+      # Optional: real places/geocoding/routing from Google Maps Platform.
+      # GOOGLE_MAPS_API_KEY: AIza...
+    ports:
+      - "8000:8000"
+
+volumes:
+  pgdata:

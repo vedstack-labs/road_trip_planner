@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: trip-planner
+  labels:
+    app: trip-planner
+spec:
+  selector:
+    app: trip-planner
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+  type: ClusterIP

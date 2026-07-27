@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trip-planner-config
+  labels:
+    app: trip-planner
+data:
+  ENVIRONMENT: "production"
+  API_PREFIX: "/api/v1"
+  AGENT_MODEL: "anthropic:claude-sonnet-4-6"
+  AGENT_USE_TEST_MODEL: "false"
+  PREFER_GOOGLE: "true"
+  ENABLE_EXTERNAL_CONTEXT: "true"
+  AUSTRALIA_CONTEXT_BASE_URL: "https://www.australia.com"
+  SHARE_BASE_URL: "https://app.helpsonroad.com/trips/shared"

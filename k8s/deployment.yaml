@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trip-planner
+  labels:
+    app: trip-planner
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: trip-planner
+  template:
+    metadata:
+      labels:
+        app: trip-planner
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/helpsonroad/trip-planner:1.0.0
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: trip-planner-config
+            - secretRef:
+                name: trip-planner-secrets
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 20
