@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
+from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -35,14 +36,20 @@ def get_engine() -> AsyncEngine:
             connect_args["check_same_thread"] = False
             engine_kwargs["pool_pre_ping"] = True
         else:
-            # Serverless (e.g. Vercel) safe defaults for asyncpg:
-            #  - NullPool: never hand back a connection cached across a frozen
-            #    invocation. A pooled socket resumed on a new event loop is the
-            #    source of the uvloop "[Errno 16] Device or resource busy".
-            #  - statement_cache_size=0: transaction-mode poolers (PgBouncer /
-            #    Supabase / Neon) reject server-side prepared statements.
+            # Serverless (e.g. Vercel) + transaction-mode pooler (Supabase
+            # Supavisor / PgBouncer) safe config for asyncpg — the SQLAlchemy
+            # docs' recommended combination:
+            #  - NullPool: never reuse a connection across a frozen invocation
+            #    (a pooled socket resumed on a new loop is what makes uvloop's
+            #    create_connection raise "[Errno 16] Device or resource busy").
+            #  - statement_cache_size / prepared_statement_cache_size = 0 and a
+            #    unique prepared-statement name per prepare: transaction poolers
+            #    multiplex sessions, so numbered/cached prepared statements
+            #    collide or vanish. Disable caching and randomize the names.
             engine_kwargs["poolclass"] = NullPool
             connect_args["statement_cache_size"] = 0
+            connect_args["prepared_statement_cache_size"] = 0
+            connect_args["prepared_statement_name_func"] = lambda: f"__asyncpg_{uuid4()}__"
         _engine = create_async_engine(
             settings.database_url,
             connect_args=connect_args,
