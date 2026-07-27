@@ -142,6 +142,14 @@ All endpoints are under `/api/v1` and require `Authorization: Bearer <JWT>`
 `name`. On first authenticated request the user profile is auto-provisioned; the
 agent then loads saved vehicles, previous trips, and preferences without asking.
 
+**Asymmetric tokens (Supabase / Lovable Cloud).** Identity providers that sign
+with ES256/RS256 are verified against a JWKS endpoint (key chosen by `kid`).
+Set `JWT_JWKS_URL` to the provider's JWKS, add the algorithms to the decode
+allow-list, and set the expected audience:
+`JWT_JWKS_URL=https://<project>.supabase.co/auth/v1/.well-known/jwks.json`,
+`JWT_ALGORITHMS=ES256,RS256,HS256`, `JWT_AUDIENCE=authenticated`. HS256 dev
+tokens keep working via the shared `JWT_SECRET`.
+
 ### Consuming from a web app (TanStack)
 
 The API is CORS-enabled: set `CORS_ORIGINS` to the web app's origin(s)

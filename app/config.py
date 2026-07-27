@@ -34,10 +34,20 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://helpsonroad:helpsonroad@localhost:5432/helpsonroad"
 
     # --- Auth (JWT) ---
+    # HS256 shared secret is used for the legacy/dev-token flow (symmetric).
     jwt_secret: str = "dev-insecure-change-me"
-    jwt_algorithm: str = "HS256"
+    jwt_algorithm: str = "HS256"  # algorithm used when *issuing* dev tokens
     jwt_issuer: str | None = None
     jwt_audience: str | None = None
+    # Asymmetric verification (e.g. Supabase/Lovable Cloud, which sign with
+    # ES256). When set, tokens whose header alg is asymmetric are verified
+    # against the JWKS at this URL; the matching key is chosen by `kid`.
+    #   JWT_JWKS_URL=https://<project>.supabase.co/auth/v1/.well-known/jwks.json
+    #   JWT_AUDIENCE=authenticated
+    jwt_jwks_url: str | None = None
+    # Comma-separated allow-list of accepted signing algorithms on decode.
+    #   JWT_ALGORITHMS=ES256,RS256,HS256
+    jwt_algorithms: str = "HS256"
 
     # --- LLM / PydanticAI ---
     # e.g. "anthropic:claude-sonnet-4-6". When unset the app falls back to a
@@ -80,6 +90,10 @@ class Settings(BaseSettings):
         if raw == "*":
             return ["*"]
         return [o.strip() for o in raw.split(",") if o.strip()]
+
+    @property
+    def jwt_algorithm_list(self) -> list[str]:
+        return [a.strip() for a in self.jwt_algorithms.split(",") if a.strip()]
 
     @property
     def google_enabled(self) -> bool:
