@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     app_name: str = "Helpsonroad Trip Planner Agent"
     environment: str = "development"
     api_prefix: str = "/api/v1"
+    # Comma-separated allowlist of origins permitted to call the API from a
+    # browser (the consuming app). "*" allows any origin (bearer-token APIs
+    # only; wildcard + credentials is disallowed by the CORS spec).
+    cors_origins: str = "*"
 
     # --- Database ---
     # Async SQLAlchemy URL. Postgres in prod; SQLite is used for local/dev/tests.
@@ -69,6 +73,13 @@ class Settings(BaseSettings):
     @property
     def is_sqlite(self) -> bool:
         return self.database_url.startswith("sqlite")
+
+    @property
+    def cors_origin_list(self) -> list[str]:
+        raw = self.cors_origins.strip()
+        if raw == "*":
+            return ["*"]
+        return [o.strip() for o in raw.split(",") if o.strip()]
 
     @property
     def google_enabled(self) -> bool:

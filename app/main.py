@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from app.api.v1 import agent, auth, journey, trips
@@ -37,6 +38,17 @@ def create_app() -> FastAPI:
         version="1.0.0",
         description="Helpsonroad AI Trip Planner Agent (MVP)",
         lifespan=lifespan,
+    )
+
+    origins = settings.cors_origin_list
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        # Wildcard origins cannot be combined with credentials per the CORS
+        # spec; this API authenticates via bearer token, not cookies.
+        allow_credentials=origins != ["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     @app.get("/health", tags=["system"])
