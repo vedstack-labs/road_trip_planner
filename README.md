@@ -58,7 +58,8 @@ app/
   main.py              FastAPI app + lifespan
 tests/                 pytest suite (auth, services, trips API, journey, agent)
 k8s/                   Deployment, Service, ConfigMap, Secret example
-Dockerfile, docker-compose.yml, .env.example
+examples/              tanstack-client/ — drop-in TypeScript client for web apps
+Dockerfile, docker-compose.yml, vercel.json, .env.example
 ```
 
 ---
@@ -140,6 +141,19 @@ All endpoints are under `/api/v1` and require `Authorization: Bearer <JWT>`
 `sub` (user id), `subscription_tier`, `roles`, optional `vehicle_id`, `email`,
 `name`. On first authenticated request the user profile is auto-provisioned; the
 agent then loads saved vehicles, previous trips, and preferences without asking.
+
+### Consuming from a web app (TanStack)
+
+The API is CORS-enabled: set `CORS_ORIGINS` to the web app's origin(s)
+(comma-separated; `*` for dev only — see `.env.example`). A drop-in TypeScript
+client for [TanStack Query](https://tanstack.com/query) / Router lives in
+[`examples/tanstack-client/`](examples/tanstack-client/): a `fetch` wrapper with
+bearer auth and typed errors, per-resource query keys + request functions, a
+`QueryClient` factory, React hooks (`useTrips`, `useCreateTrip`,
+`useActiveJourney`, `useChatStream`, …), and SSE streaming over `fetch`. Copy it
+into your frontend's `src/api/`, set `VITE_API_URL`, and wire `initAuth()` +
+`QueryClientProvider`. Generate types from the live OpenAPI doc to stay in sync:
+`npx openapi-typescript $VITE_API_URL/openapi.json -o ./schema.d.ts`.
 
 ---
 
