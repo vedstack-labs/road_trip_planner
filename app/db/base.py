@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.pool import NullPool
 
 from app.config import get_settings
 
@@ -29,13 +30,23 @@ def get_engine() -> AsyncEngine:
     if _engine is None:
         settings = get_settings()
         connect_args: dict = {}
+        engine_kwargs: dict = {"echo": False}
         if settings.is_sqlite:
             connect_args["check_same_thread"] = False
+            engine_kwargs["pool_pre_ping"] = True
+        else:
+            # Serverless (e.g. Vercel) safe defaults for asyncpg:
+            #  - NullPool: never hand back a connection cached across a frozen
+            #    invocation. A pooled socket resumed on a new event loop is the
+            #    source of the uvloop "[Errno 16] Device or resource busy".
+            #  - statement_cache_size=0: transaction-mode poolers (PgBouncer /
+            #    Supabase / Neon) reject server-side prepared statements.
+            engine_kwargs["poolclass"] = NullPool
+            connect_args["statement_cache_size"] = 0
         _engine = create_async_engine(
             settings.database_url,
-            echo=False,
-            pool_pre_ping=True,
             connect_args=connect_args,
+            **engine_kwargs,
         )
     return _engine
 

@@ -18,9 +18,14 @@ logging.basicConfig(level=logging.INFO)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create tables if they don't exist. Idempotent; production may instead use
-    # managed migrations, but this keeps first-boot and dev/test frictionless.
-    await init_models()
+    # Auto-create tables only for the file-backed SQLite used in local/dev/test,
+    # where it keeps first boot frictionless. Against managed Postgres the schema
+    # is owned by migrations: running create_all on every serverless cold start
+    # is wasteful and, worse, makes boot hard-depend on DB reachability so a
+    # transient connect failure kills the whole function. Skip it there.
+    settings = get_settings()
+    if settings.is_sqlite:
+        await init_models()
     yield
     await dispose_engine()
 
